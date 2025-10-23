@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Website Traffic Tracker – Dashboard</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; margin: 24px; }
+    .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    label { display: inline-block; margin-right: 8px; }
+    input[type="date"] { padding: 6px 8px; border-radius: 8px; border: 1px solid #d1d5db; }
+    button { padding: 8px 12px; border-radius: 8px; border: 1px solid #111827; background: #111827; color: #fff; cursor: pointer; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e5e7eb; }
+    th { background: #f9fafb; }
+    .muted { color: #6b7280; font-size: 12px; }
+    .row { display: flex; gap: 12px; align-items: center; }
+  </style>
+</head>
+<body>
+  <h1>Website Traffic Tracker – Dashboard</h1>
+  <div class="card">
+    <div class="row">
+      <div>
+        <label for="from">From:</label>
+        <input id="from" type="date" />
+      </div>
+      <div>
+        <label for="to">To:</label>
+        <input id="to" type="date" />
+      </div>
+      <div>
+        <button id="load">Load Stats</button>
+      </div>
+    </div>
+    <p class="muted">If left empty, the API defaults to the last 7 days.</p>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Page URL</th>
+          <th>Unique Visitors</th>
+          <th>Total Visits</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="3" class="muted">No data yet.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    function apiUrl() {
+      const base = window.location.origin;
+      const from = document.getElementById('from').value;
+      const to = document.getElementById('to').value;
+      const params = new URLSearchParams();
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      return base + '/api/v1/stats.php' + (params.toString() ? ('?' + params.toString()) : '');
+    }
+
+    async function loadStats() {
+      const url = apiUrl();
+      const res = await fetch(url);
+      const data = await res.json();
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = '';
+      if (!data.rows || data.rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="muted">No data in the selected range.</td></tr>';
+        return;
+      }
+      for (const row of data.rows) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + escapeHtml(row.page_url) + '</td>' +
+                       '<td>' + row.unique_visitors + '</td>' +
+                       '<td>' + row.total_visits + '</td>';
+        tbody.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replaceAll('&', '&amp;')
+                      .replaceAll('<', '&lt;')
+                      .replaceAll('>', '&gt;')
+                      .replaceAll('"', '&quot;')
+                      .replaceAll("'", '&#39;');
+    }
+
+    document.getElementById('load').addEventListener('click', loadStats);
+  </script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+-- The canonical schema lives in sql/migrations.
+-- Apply migrations in order, starting with:
+--   mysql -u root -p < sql/migrations/001_init.sql
